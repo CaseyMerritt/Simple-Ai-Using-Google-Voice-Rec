@@ -1,0 +1,128 @@
+import speech_recognition as sr
+import bluetooth
+import time
+import os
+from pygame import mixer
+from gtts import gTTS
+from mutagen.mp3 import MP3
+
+r = sr.Recognizer()
+cont = False
+
+
+def listening():
+    with sr.Microphone() as source:
+        audio = r.listen(source)
+
+        try:
+            text = r.recognize_google(audio)
+            print(text)
+            if text[0:5] == 'Karen':
+                detCommands(text[5:])
+        except:
+            print('sorry didnt get that')
+
+
+def detCommands(text):
+    if 'quit' in text:
+        myText = 'Goodbye cruel world, shut down commencing'
+        voiceSynth(myText)
+        global cont
+        cont = True
+    elif 'say' in text:
+        sayCommands(text[5:])
+    elif 'activate ' in text:
+        activateCommands(text[10:])
+    elif 'play' in text:
+        playCommands(text[6:])
+    elif 'connect to' in text:
+        bdCommands(text[12:])
+
+
+def playCommands(text):
+    if 'music' in text:
+        if 'type Shuffle' in text:
+            myText = 'Shuffle Playing Main Music Playlist'
+            voiceSynth(myText)
+        elif 'type start' in text:
+            myText = 'Playing Main Playlist From The Start'
+            voiceSynth(myText)
+        elif 'type specific index' in text:
+            myText = 'What Index?'
+            voiceSynth(myText)
+    elif 'simp' in text:
+        if 'type shuffle' in text:
+            myText = 'Shuffle Playing Simp Music Playlist'
+            voiceSynth(myText)
+        elif 'type start' in text:
+            myText = 'Playing Simp Playlist From The Start'
+            voiceSynth(myText)
+        elif 'type specific index' in text:
+            myText = 'What Index?'
+            voiceSynth(myText)
+
+
+def sayCommands(text):
+    if 'hello' in text:
+        myText = 'Hello Casey'
+        voiceSynth(myText)
+    elif 'yeet' in text:
+        myText = 'Shut The Fuck Up Casey'
+        voiceSynth(myText)
+
+
+def activateCommands(text):
+    if 'morning mode' in text:
+        myText = 'Activating Morning Mode, three, two, one'
+        voiceSynth(myText)
+    elif 'night mode' in text:
+        myText = 'Activating Night Mode, three, two, one'
+        voiceSynth(myText)
+    elif 'game mode' in text:
+        myText = 'Activating Game Mode, three, two, one'
+        voiceSynth(myText)
+    elif 'fun mode' in text:
+        myText = 'Oh Get It Casey, three, two, one'
+        voiceSynth(myText)
+
+
+def voiceSynth(myText):
+    language = 'en'
+    output = gTTS(text=myText, lang=language, slow=False)
+    output.save("output.mp3")
+    audio = MP3("output.mp3")
+    mixer.init()
+    mixer.music.load("output.mp3")
+    mixer.music.play()
+    time.sleep(audio.info.length)
+    mixer.quit()
+
+
+def bdCommands(name):
+    target_address = None
+    target_name = name
+
+    nearby_devices = bluetooth.discover_devices()
+    for bdaddr in nearby_devices:
+        if target_name == bluetooth.lookup_name(bdaddr):
+            target_address = bdaddr
+            break
+
+    print(target_name)
+    if target_address is None:
+        myText = 'Failed to Find Device'
+        voiceSynth(myText)
+    else:
+        port = 1
+        sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+
+        if sock.connect(target_address, port) is True:
+            myText = 'Connected to Device'
+            voiceSynth(myText)
+        else:
+            myText = 'Failed to Connect to device'
+        sock.close()
+
+
+while cont is False:
+    listening()
